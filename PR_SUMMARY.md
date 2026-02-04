@@ -61,7 +61,7 @@ The Docker build workflow now:
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/your-org/superset.git
+git clone https://github.com/YOUR_ORG/superset.git
 cd superset
 
 # 2. Push to master (triggers automatic image build)
@@ -69,9 +69,9 @@ git push origin master
 
 # 3. Deploy with Helm
 helm install my-superset ./helm/superset \
-  --set image.repository=ghcr.io/your-org/superset \
+  --set image.repository=ghcr.io/YOUR_ORG/superset \
   --set image.tag=latest \
-  --set initImage.repository=ghcr.io/your-org/superset \
+  --set initImage.repository=ghcr.io/YOUR_ORG/superset \
   --set initImage.tag=dockerize
 ```
 

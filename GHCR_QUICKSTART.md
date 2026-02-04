@@ -6,17 +6,17 @@ This is a quick reference guide for deploying Superset using GitHub Container Re
 
 ```bash
 # 1. Fork/clone the repository
-git clone https://github.com/your-org/superset.git
+git clone https://github.com/YOUR_ORG/superset.git
 cd superset
 
 # 2. Push to master to build images (or wait for CI)
-# Images will automatically be pushed to ghcr.io/your-org/superset
+# Images will automatically be pushed to ghcr.io/YOUR_ORG/superset
 
 # 3. Deploy with Helm
 helm install my-superset ./helm/superset \
-  --set image.repository=ghcr.io/your-org/superset \
+  --set image.repository=ghcr.io/YOUR_ORG/superset \
   --set image.tag=latest \
-  --set initImage.repository=ghcr.io/your-org/superset \
+  --set initImage.repository=ghcr.io/YOUR_ORG/superset \
   --set initImage.tag=dockerize
 ```
 
@@ -52,9 +52,9 @@ After pushing to master, images are available at:
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `latest` | Latest lean build from master | `ghcr.io/your-org/superset:latest` |
-| `<preset>` | Latest build of specific preset | `ghcr.io/your-org/superset:lean` |
-| `GHA-<preset>-<id>` | Specific build (reproducible) | `ghcr.io/your-org/superset:GHA-lean-1234567890` |
+| `latest` | Latest lean build from master | `ghcr.io/YOUR_ORG/superset:latest` |
+| `<preset>` | Latest build of specific preset | `ghcr.io/YOUR_ORG/superset:lean` |
+| `GHA-<preset>-<id>` | Specific build (reproducible) | `ghcr.io/YOUR_ORG/superset:GHA-lean-1234567890` |
 
 **Presets available:** `lean`, `dev`, `py310`, `py311`, `py312`, `websocket`, `dockerize`
 
@@ -68,13 +68,13 @@ kubectl describe pod <pod-name> | grep Image
 kubectl delete pod -l app=superset
 
 # Check available GHCR images
-# Go to: https://github.com/orgs/your-org/packages
+# Go to: https://github.com/orgs/YOUR_ORG/packages
 ```
 
 ## Troubleshooting
 
 **Problem:** "ImagePullBackOff" or "ErrImagePull"
-- Check image exists: Visit https://github.com/orgs/your-org/packages
+- Check image exists: Visit https://github.com/orgs/YOUR_ORG/packages
 - For private repos, verify image pull secret is created
 - Verify secret name matches in your values file
 
@@ -90,6 +90,6 @@ kubectl delete pod -l app=superset
 ## Full Documentation
 
 For complete documentation, see:
-- [GHCR Deployment Guide](docs/docs/installation/ghcr-deployment.md)
-- [Implementation Summary](GHCR_IMPLEMENTATION.md)
-- [Helm Chart README](helm/superset/README.md)
+- [GHCR Deployment Guide](./docs/docs/installation/ghcr-deployment.md)
+- [Implementation Summary](./GHCR_IMPLEMENTATION.md)
+- [Helm Chart README](./helm/superset/README.md)

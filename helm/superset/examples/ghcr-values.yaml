@@ -30,8 +30,8 @@
 
 # Configure the main Superset image from GHCR
 image:
-  # Replace 'your-org' with your GitHub organization or username
-  repository: ghcr.io/your-org/superset
+  # Replace 'YOUR_ORG' with your GitHub organization or username
+  repository: ghcr.io/YOUR_ORG/superset
   # Use 'latest' for the most recent build, or specify a version/tag
   # Available tags: latest, lean, dev, py310, py311, py312, websocket, dockerize
   tag: latest
@@ -39,7 +39,7 @@ image:
 
 # Configure the init container image from GHCR
 initImage:
-  repository: ghcr.io/your-org/superset
+  repository: ghcr.io/YOUR_ORG/superset
   tag: dockerize
   pullPolicy: Always
 
@@ -58,7 +58,7 @@ initImage:
 
 # Example: Using a specific build tag instead of 'latest'
 # image:
-#   repository: ghcr.io/your-org/superset
+#   repository: ghcr.io/YOUR_ORG/superset
 #   tag: GHA-lean-1234567890  # Specific GitHub Actions run ID
 #   pullPolicy: IfNotPresent
 
@@ -71,7 +71,7 @@ initImage:
 # - dockerize: Initialization utilities
 
 # Note: After building images via GitHub Actions, they will be available at:
-#   ghcr.io/<your-org>/superset:latest         (latest lean build on master)
-#   ghcr.io/<your-org>/superset:lean           (latest lean preset)
-#   ghcr.io/<your-org>/superset:dev            (latest dev preset)
-#   ghcr.io/<your-org>/superset:GHA-<preset>-<run_id>  (specific build)
+#   ghcr.io/<YOUR_ORG>/superset:latest         (latest lean build on master)
+#   ghcr.io/<YOUR_ORG>/superset:lean           (latest lean preset)
+#   ghcr.io/<YOUR_ORG>/superset:dev            (latest dev preset)
+#   ghcr.io/<YOUR_ORG>/superset:GHA-<preset>-<run_id>  (specific build)

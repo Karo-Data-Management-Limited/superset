@@ -52,7 +52,7 @@ ghcr.io/<org-name>/superset:GHA-<preset>-<run_id>  # Specific build by run ID
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
-git clone https://github.com/your-org/superset.git
+git clone https://github.com/YOUR_ORG/superset.git
 cd superset
 ```
 
@@ -105,7 +105,7 @@ npm install -g supersetbot
 # Build a specific preset
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  --tag ghcr.io/your-org/superset:lean \
+  --tag ghcr.io/YOUR_ORG/superset:lean \
   --push \
   -f Dockerfile \
   --target lean \
@@ -115,7 +115,7 @@ docker buildx build \
 supersetbot docker \
   --push \
   --preset lean \
-  --extra-flags "--tag ghcr.io/your-org/superset:lean"
+  --extra-flags "--tag ghcr.io/YOUR_ORG/superset:lean"
 ```
 
 ## Deploying with Helm
@@ -126,15 +126,15 @@ The repository includes an example values file for GHCR deployments:
 
 ```bash
 # Clone the repository if you haven't already
-git clone https://github.com/your-org/superset.git
+git clone https://github.com/YOUR_ORG/superset.git
 cd superset
 
 # Deploy using GHCR images
 helm install my-superset ./helm/superset \
   -f ./helm/superset/examples/ghcr-values.yaml \
-  --set image.repository=ghcr.io/your-org/superset \
+  --set image.repository=ghcr.io/YOUR_ORG/superset \
   --set image.tag=latest \
-  --set initImage.repository=ghcr.io/your-org/superset \
+  --set initImage.repository=ghcr.io/YOUR_ORG/superset \
   --set initImage.tag=dockerize
 ```
 
@@ -144,12 +144,12 @@ Create your own `my-values.yaml`:
 
 ```yaml
 image:
-  repository: ghcr.io/your-org/superset
+  repository: ghcr.io/YOUR_ORG/superset
   tag: latest
   pullPolicy: Always
 
 initImage:
-  repository: ghcr.io/your-org/superset
+  repository: ghcr.io/YOUR_ORG/superset
   tag: dockerize
   pullPolicy: Always
 
@@ -180,11 +180,11 @@ kubectl create secret docker-registry ghcr-secret \
 # Update your values file
 cat <<EOF > my-values.yaml
 image:
-  repository: ghcr.io/your-org/superset
+  repository: ghcr.io/YOUR_ORG/superset
   tag: latest
 
 initImage:
-  repository: ghcr.io/your-org/superset
+  repository: ghcr.io/YOUR_ORG/superset
   tag: dockerize
 
 imagePullSecrets:
@@ -225,7 +225,7 @@ kubectl get pods -l app=superset
 kubectl describe pod <pod-name> | grep Image:
 
 # Expected output:
-# Image: ghcr.io/your-org/superset:latest
+# Image: ghcr.io/YOUR_ORG/superset:latest
 ```
 
 ### View Available Images
@@ -272,7 +272,7 @@ curl -H "Authorization: token YOUR_PAT" \
 2. **Pin Image Versions**: In your values file, always specify an exact tag for production:
    ```yaml
    image:
-     repository: ghcr.io/your-org/superset
+     repository: ghcr.io/YOUR_ORG/superset
      tag: GHA-lean-1234567890  # Specific build
      pullPolicy: IfNotPresent
    ```
@@ -287,6 +287,6 @@ curl -H "Authorization: token YOUR_PAT" \
 
 ## Next Steps
 
-- Review the [Helm Chart Values](./helm/superset/values.yaml) for all configuration options
-- Check the [GitHub Actions Workflow](./.github/workflows/docker.yml) to understand the build process
-- Customize your Superset configuration using [config overrides](./helm/superset/README.md#configuration-overrides)
+- Review the [Helm Chart Values](../../../helm/superset/values.yaml) for all configuration options
+- Check the [GitHub Actions Workflow](../../../.github/workflows/docker.yml) to understand the build process
+- Customize your Superset configuration using config overrides (see Helm chart README)
