@@ -50,7 +50,7 @@ On helm this can be set on `extraSecretEnv.SUPERSET_SECRET_KEY` or `configOverri
 
 If you want to build and deploy your own Superset images from GitHub Container Registry instead of the default DockerHub images:
 
-1. **Build and push images to GHCR**: The repository includes a GitHub Actions workflow (`.github/workflows/docker.yml`) that automatically builds and pushes images to both DockerHub and GHCR on every push to master or version branches.
+1. **Build and push images to GHCR**: The repository includes a GitHub Actions workflow (`.github/workflows/docker.yml`) that automatically builds and pushes images to both DockerHub and GHCR on pushes to `develop`, `release/*`, and `production` branches, as well as version tags.
 
 2. **Deploy using GHCR images**: Use the example values file to configure Helm to pull from GHCR:
 
@@ -74,6 +74,8 @@ helm install my-superset ./helm/superset \
   -f ./helm/superset/examples/ghcr-values.yaml \
   --set imagePullSecrets[0].name=ghcr-secret
 ```
+
+4. **Branching Strategy**: For organizations maintaining a fork with custom modifications, see the [Branching Strategy Guide](../../docs/BRANCHING_STRATEGY.md) for recommended workflow using `develop`, `release/*`, and `production` branches.
 
 See `helm/superset/examples/ghcr-values.yaml` for a complete example configuration.
 

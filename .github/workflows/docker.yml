@@ -3,11 +3,23 @@ name: Build & publish docker images
 on:
   push:
     branches:
-      - "master"
+      # Upstream sync branch - builds disabled to avoid conflicts
+      # - "master"
+      # Development branch - builds enabled for testing
+      - "develop"
+      # Release branches - builds enabled for release candidates
+      - "release/*"
+      # Production branch - builds enabled for stable releases
+      - "production"
+      # Version branches for upstream compatibility
       - "[0-9].[0-9]*"
+    tags:
+      # Build on version tags (e.g., v1.0.0, v1.1.0-rc.1)
+      - "v*"
   pull_request:
     branches:
-      - "master"
+      - "develop"
+      - "production"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -109,16 +121,71 @@ jobs:
           docker tag $IMAGE_TAG $GHCR_IMAGE_TAG
           docker push $GHCR_IMAGE_TAG
 
-          # Also tag with preset name for easier reference
-          GHCR_PRESET_TAG=ghcr.io/${{ github.repository_owner }}/superset:${{ matrix.build_preset }}
-          docker tag $IMAGE_TAG $GHCR_PRESET_TAG
-          docker push $GHCR_PRESET_TAG
+          # Determine branch/tag-specific tagging strategy
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # Git tag (version release): tag with version number
+            VERSION="${GITHUB_REF#refs/tags/}"
+            GHCR_VERSION_TAG=ghcr.io/${{ github.repository_owner }}/superset:${VERSION}-${{ matrix.build_preset }}
+            docker tag $IMAGE_TAG $GHCR_VERSION_TAG
+            docker push $GHCR_VERSION_TAG
 
-          # Tag latest for the default preset on master branch
-          if [ "${{ github.ref }}" = "refs/heads/master" ] && [ "${{ matrix.build_preset }}" = "lean" ]; then
-            GHCR_LATEST_TAG=ghcr.io/${{ github.repository_owner }}/superset:latest
-            docker tag $IMAGE_TAG $GHCR_LATEST_TAG
-            docker push $GHCR_LATEST_TAG
+            if [ "${{ matrix.build_preset }}" = "lean" ]; then
+              GHCR_VERSION_LEAN_TAG=ghcr.io/${{ github.repository_owner }}/superset:${VERSION}
+              docker tag $IMAGE_TAG $GHCR_VERSION_LEAN_TAG
+              docker push $GHCR_VERSION_LEAN_TAG
+
+              # Also tag as latest for non-RC versions
+              if [[ ! "$VERSION" =~ -rc\. ]]; then
+                GHCR_LATEST_TAG=ghcr.io/${{ github.repository_owner }}/superset:latest
+                docker tag $IMAGE_TAG $GHCR_LATEST_TAG
+                docker push $GHCR_LATEST_TAG
+              fi
+            fi
+
+          else
+            # Branch-based tagging
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+            if [[ "$BRANCH_NAME" == "develop" ]]; then
+              # Development branch: tag as develop-<preset>
+              GHCR_BRANCH_TAG=ghcr.io/${{ github.repository_owner }}/superset:develop-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_BRANCH_TAG
+              docker push $GHCR_BRANCH_TAG
+
+              # Also tag as 'develop' for lean preset
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_DEVELOP_TAG=ghcr.io/${{ github.repository_owner }}/superset:develop
+                docker tag $IMAGE_TAG $GHCR_DEVELOP_TAG
+                docker push $GHCR_DEVELOP_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == release/* ]]; then
+              # Release branch: tag as rc-<version>-<preset>
+              VERSION="${BRANCH_NAME#release/}"
+              GHCR_RC_TAG=ghcr.io/${{ github.repository_owner }}/superset:rc-${VERSION}-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_RC_TAG
+              docker push $GHCR_RC_TAG
+
+              # Also tag as rc-<version> for lean preset
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_RC_LEAN_TAG=ghcr.io/${{ github.repository_owner }}/superset:rc-${VERSION}
+                docker tag $IMAGE_TAG $GHCR_RC_LEAN_TAG
+                docker push $GHCR_RC_LEAN_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == "production" ]]; then
+              # Production branch: tag as preset name
+              GHCR_PRESET_TAG=ghcr.io/${{ github.repository_owner }}/superset:${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_PRESET_TAG
+              docker push $GHCR_PRESET_TAG
+
+              # Tag as 'stable' for lean preset (use 'stable' instead of 'latest' for branch)
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_STABLE_TAG=ghcr.io/${{ github.repository_owner }}/superset:stable
+                docker tag $IMAGE_TAG $GHCR_STABLE_TAG
+                docker push $GHCR_STABLE_TAG
+              fi
+            fi
           fi
 
       - name: Print docker stats
