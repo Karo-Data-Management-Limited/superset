@@ -108,12 +108,12 @@ jobs:
         run: |
           docker tag $IMAGE_TAG $GHCR_IMAGE_TAG
           docker push $GHCR_IMAGE_TAG
-          
+
           # Also tag with preset name for easier reference
           GHCR_PRESET_TAG=ghcr.io/${{ github.repository_owner }}/superset:${{ matrix.build_preset }}
           docker tag $IMAGE_TAG $GHCR_PRESET_TAG
           docker push $GHCR_PRESET_TAG
-          
+
           # Tag latest for the default preset on master branch
           if [ "${{ github.ref }}" = "refs/heads/master" ] && [ "${{ matrix.build_preset }}" = "lean" ]; then
             GHCR_LATEST_TAG=ghcr.io/${{ github.repository_owner }}/superset:latest
