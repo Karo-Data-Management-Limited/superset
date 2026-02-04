@@ -1,0 +1,77 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Example values file for deploying Superset using GitHub Container Registry (GHCR)
+#
+# This file demonstrates how to deploy Superset using custom-built images
+# from GitHub Container Registry instead of the default DockerHub images.
+#
+# Usage:
+#   helm install superset ./helm/superset -f ./helm/superset/examples/ghcr-values.yaml
+#
+# Or with additional custom values:
+#   helm install superset ./helm/superset \
+#     -f ./helm/superset/examples/ghcr-values.yaml \
+#     -f your-custom-values.yaml
+
+# Configure the main Superset image from GHCR
+image:
+  # Replace 'your-org' with your GitHub organization or username
+  repository: ghcr.io/your-org/superset
+  # Use 'latest' for the most recent build, or specify a version/tag
+  # Available tags: latest, lean, dev, py310, py311, py312, websocket, dockerize
+  tag: latest
+  pullPolicy: Always  # Set to Always to ensure you get the latest image
+
+# Configure the init container image from GHCR
+initImage:
+  repository: ghcr.io/your-org/superset
+  tag: dockerize
+  pullPolicy: Always
+
+# If your GHCR repository is private, you'll need to create an image pull secret
+# First, create the secret in your Kubernetes cluster:
+#
+#   kubectl create secret docker-registry ghcr-secret \
+#     --docker-server=ghcr.io \
+#     --docker-username=YOUR_GITHUB_USERNAME \
+#     --docker-password=YOUR_GITHUB_PAT \
+#     --docker-email=YOUR_EMAIL
+#
+# Then uncomment and use it:
+# imagePullSecrets:
+#   - name: ghcr-secret
+
+# Example: Using a specific build tag instead of 'latest'
+# image:
+#   repository: ghcr.io/your-org/superset
+#   tag: GHA-lean-1234567890  # Specific GitHub Actions run ID
+#   pullPolicy: IfNotPresent
+
+# Example: Using different presets for different components
+# The build process creates several image variants:
+# - lean: Minimal production image (recommended for production)
+# - dev: Development image with additional tools
+# - py310/py311/py312: Python version-specific builds
+# - websocket: WebSocket server for real-time features
+# - dockerize: Initialization utilities
+
+# Note: After building images via GitHub Actions, they will be available at:
+#   ghcr.io/<your-org>/superset:latest         (latest lean build on master)
+#   ghcr.io/<your-org>/superset:lean           (latest lean preset)
+#   ghcr.io/<your-org>/superset:dev            (latest dev preset)
+#   ghcr.io/<your-org>/superset:GHA-<preset>-<run_id>  (specific build)

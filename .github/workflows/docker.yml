@@ -38,6 +38,7 @@ jobs:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       IMAGE_TAG: apache/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
+      GHCR_IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
 
     steps:
 
@@ -59,6 +60,14 @@ jobs:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
           dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           build: "true"
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup supersetbot
         if: steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker
@@ -93,11 +102,31 @@ jobs:
         if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
         run:  docker pull $IMAGE_TAG
 
+      # Tag and push to GitHub Container Registry
+      - name: Tag and Push to GHCR
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
+        run: |
+          docker tag $IMAGE_TAG $GHCR_IMAGE_TAG
+          docker push $GHCR_IMAGE_TAG
+          
+          # Also tag with preset name for easier reference
+          GHCR_PRESET_TAG=ghcr.io/${{ github.repository_owner }}/superset:${{ matrix.build_preset }}
+          docker tag $IMAGE_TAG $GHCR_PRESET_TAG
+          docker push $GHCR_PRESET_TAG
+          
+          # Tag latest for the default preset on master branch
+          if [ "${{ github.ref }}" = "refs/heads/master" ] && [ "${{ matrix.build_preset }}" = "lean" ]; then
+            GHCR_LATEST_TAG=ghcr.io/${{ github.repository_owner }}/superset:latest
+            docker tag $IMAGE_TAG $GHCR_LATEST_TAG
+            docker push $GHCR_LATEST_TAG
+          fi
+
       - name: Print docker stats
         if: steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker
         run: |
           echo "SHA: ${{ github.sha }}"
           echo "IMAGE: $IMAGE_TAG"
+          echo "GHCR IMAGE: $GHCR_IMAGE_TAG"
           docker images $IMAGE_TAG
           docker history $IMAGE_TAG
 
