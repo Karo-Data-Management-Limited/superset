@@ -3,11 +3,23 @@ name: Build & publish docker images
 on:
   push:
     branches:
-      - "master"
+      # Upstream sync branch - builds disabled to avoid conflicts
+      # - "master"
+      # Development branch - builds enabled for testing
+      - "develop"
+      # Release branches - builds enabled for release candidates
+      - "release/*"
+      # Production branch - builds enabled for stable releases
+      - "production"
+      # Version branches for upstream compatibility
       - "[0-9].[0-9]*"
+    tags:
+      # Build on version tags (e.g., v1.0.0, v1.1.0-rc.1)
+      - "v*"
   pull_request:
     branches:
-      - "master"
+      - "develop"
+      - "production"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -38,6 +50,10 @@ jobs:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       IMAGE_TAG: apache/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
+      GHCR_IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
+      # ACR configuration (optional - configure if using Azure Container Registry)
+      ACR_NAME: ${{ secrets.ACR_NAME }}
+      ACR_IMAGE_TAG: ${{ secrets.ACR_NAME }}.azurecr.io/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
 
     steps:
 
@@ -59,6 +75,22 @@ jobs:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
           dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           build: "true"
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Azure Container Registry
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker) && secrets.ACR_NAME != ''
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Setup supersetbot
         if: steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker
@@ -93,11 +125,157 @@ jobs:
         if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
         run:  docker pull $IMAGE_TAG
 
+      # Tag and push to GitHub Container Registry
+      - name: Tag and Push to GHCR
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker)
+        run: |
+          docker tag $IMAGE_TAG $GHCR_IMAGE_TAG
+          docker push $GHCR_IMAGE_TAG
+
+          # Determine branch/tag-specific tagging strategy
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # Git tag (version release): tag with version number
+            VERSION="${GITHUB_REF#refs/tags/}"
+            GHCR_VERSION_TAG=ghcr.io/${{ github.repository_owner }}/superset:${VERSION}-${{ matrix.build_preset }}
+            docker tag $IMAGE_TAG $GHCR_VERSION_TAG
+            docker push $GHCR_VERSION_TAG
+
+            if [ "${{ matrix.build_preset }}" = "lean" ]; then
+              GHCR_VERSION_LEAN_TAG=ghcr.io/${{ github.repository_owner }}/superset:${VERSION}
+              docker tag $IMAGE_TAG $GHCR_VERSION_LEAN_TAG
+              docker push $GHCR_VERSION_LEAN_TAG
+
+              # Also tag as latest for non-RC versions
+              if [[ ! "$VERSION" =~ -rc\. ]]; then
+                GHCR_LATEST_TAG=ghcr.io/${{ github.repository_owner }}/superset:latest
+                docker tag $IMAGE_TAG $GHCR_LATEST_TAG
+                docker push $GHCR_LATEST_TAG
+              fi
+            fi
+
+          else
+            # Branch-based tagging
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+            if [[ "$BRANCH_NAME" == "develop" ]]; then
+              # Development branch: tag as develop-<preset>
+              GHCR_BRANCH_TAG=ghcr.io/${{ github.repository_owner }}/superset:develop-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_BRANCH_TAG
+              docker push $GHCR_BRANCH_TAG
+
+              # Also tag as 'develop' for lean preset
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_DEVELOP_TAG=ghcr.io/${{ github.repository_owner }}/superset:develop
+                docker tag $IMAGE_TAG $GHCR_DEVELOP_TAG
+                docker push $GHCR_DEVELOP_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == release/* ]]; then
+              # Release branch: tag as rc-<version>-<preset>
+              VERSION="${BRANCH_NAME#release/}"
+              GHCR_RC_TAG=ghcr.io/${{ github.repository_owner }}/superset:rc-${VERSION}-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_RC_TAG
+              docker push $GHCR_RC_TAG
+
+              # Also tag as rc-<version> for lean preset
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_RC_LEAN_TAG=ghcr.io/${{ github.repository_owner }}/superset:rc-${VERSION}
+                docker tag $IMAGE_TAG $GHCR_RC_LEAN_TAG
+                docker push $GHCR_RC_LEAN_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == "production" ]]; then
+              # Production branch: tag as preset name
+              GHCR_PRESET_TAG=ghcr.io/${{ github.repository_owner }}/superset:${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $GHCR_PRESET_TAG
+              docker push $GHCR_PRESET_TAG
+
+              # Tag as 'stable' for lean preset (use 'stable' instead of 'latest' for branch)
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                GHCR_STABLE_TAG=ghcr.io/${{ github.repository_owner }}/superset:stable
+                docker tag $IMAGE_TAG $GHCR_STABLE_TAG
+                docker push $GHCR_STABLE_TAG
+              fi
+            fi
+          fi
+
+      # Tag and push to Azure Container Registry (if configured)
+      - name: Tag and Push to ACR
+        if: github.event_name == 'push' && (steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker) && secrets.ACR_NAME != ''
+        run: |
+          docker tag $IMAGE_TAG $ACR_IMAGE_TAG
+          docker push $ACR_IMAGE_TAG
+
+          # Use same tagging strategy as GHCR
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # Git tag (version release): tag with version number
+            VERSION="${GITHUB_REF#refs/tags/}"
+            ACR_VERSION_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:${VERSION}-${{ matrix.build_preset }}
+            docker tag $IMAGE_TAG $ACR_VERSION_TAG
+            docker push $ACR_VERSION_TAG
+
+            if [ "${{ matrix.build_preset }}" = "lean" ]; then
+              ACR_VERSION_LEAN_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:${VERSION}
+              docker tag $IMAGE_TAG $ACR_VERSION_LEAN_TAG
+              docker push $ACR_VERSION_LEAN_TAG
+
+              # Also tag as latest for non-RC versions
+              if [[ ! "$VERSION" =~ -rc\. ]]; then
+                ACR_LATEST_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:latest
+                docker tag $IMAGE_TAG $ACR_LATEST_TAG
+                docker push $ACR_LATEST_TAG
+              fi
+            fi
+
+          else
+            # Branch-based tagging
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+            if [[ "$BRANCH_NAME" == "develop" ]]; then
+              ACR_BRANCH_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:develop-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $ACR_BRANCH_TAG
+              docker push $ACR_BRANCH_TAG
+
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                ACR_DEVELOP_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:develop
+                docker tag $IMAGE_TAG $ACR_DEVELOP_TAG
+                docker push $ACR_DEVELOP_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == release/* ]]; then
+              VERSION="${BRANCH_NAME#release/}"
+              ACR_RC_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:rc-${VERSION}-${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $ACR_RC_TAG
+              docker push $ACR_RC_TAG
+
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                ACR_RC_LEAN_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:rc-${VERSION}
+                docker tag $IMAGE_TAG $ACR_RC_LEAN_TAG
+                docker push $ACR_RC_LEAN_TAG
+              fi
+
+            elif [[ "$BRANCH_NAME" == "production" ]]; then
+              ACR_PRESET_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:${{ matrix.build_preset }}
+              docker tag $IMAGE_TAG $ACR_PRESET_TAG
+              docker push $ACR_PRESET_TAG
+
+              if [ "${{ matrix.build_preset }}" = "lean" ]; then
+                ACR_STABLE_TAG=${{ secrets.ACR_NAME }}.azurecr.io/superset:stable
+                docker tag $IMAGE_TAG $ACR_STABLE_TAG
+                docker push $ACR_STABLE_TAG
+              fi
+            fi
+          fi
+
       - name: Print docker stats
         if: steps.check.outputs.python || steps.check.outputs.frontend || steps.check.outputs.docker
         run: |
           echo "SHA: ${{ github.sha }}"
           echo "IMAGE: $IMAGE_TAG"
+          echo "GHCR IMAGE: $GHCR_IMAGE_TAG"
+          if [ -n "${{ secrets.ACR_NAME }}" ]; then
+            echo "ACR IMAGE: $ACR_IMAGE_TAG"
+          fi
           docker images $IMAGE_TAG
           docker history $IMAGE_TAG
 

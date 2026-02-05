@@ -1,0 +1,229 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Example values file for deploying Superset using Azure Container Registry (ACR)
+# with Azure Kubernetes Service (AKS)
+#
+# This configuration is optimized for private AKS clusters using ACR with managed identity.
+#
+# Usage:
+#   helm install superset ./helm/superset -f ./helm/superset/examples/acr-values.yaml
+
+# ============================================================================
+# IMAGE CONFIGURATION
+# ============================================================================
+
+# Configure the main Superset image from ACR
+image:
+  # Replace with your ACR name (e.g., karodata.azurecr.io)
+  repository: YOUR_ACR_NAME.azurecr.io/superset
+  
+  # Use specific tags for production deployments
+  # Available tags: latest, stable, develop, rc-<version>, v<version>
+  tag: latest
+  
+  # Use IfNotPresent for production (faster), Always for development
+  pullPolicy: IfNotPresent
+
+# Configure the init container image from ACR
+initImage:
+  repository: YOUR_ACR_NAME.azurecr.io/superset
+  tag: dockerize
+  pullPolicy: IfNotPresent
+
+# ============================================================================
+# IMAGE PULL SECRETS (Optional - not needed with AKS managed identity)
+# ============================================================================
+
+# For AKS with managed identity (recommended):
+# 1. Attach ACR to AKS cluster:
+#    az aks update -n myAKSCluster -g myResourceGroup --attach-acr myACR
+# 2. Leave imagePullSecrets empty (no secrets needed)
+
+# For AKS without managed identity, create and use a secret:
+# 1. Create service principal:
+#    az ad sp create-for-rbac --name acr-service-principal --skip-assignment
+# 2. Get ACR ID:
+#    ACR_ID=$(az acr show --name myACR --resource-group myResourceGroup --query id --output tsv)
+# 3. Assign role:
+#    az role assignment create --assignee <appId> --scope $ACR_ID --role acrpull
+# 4. Create Kubernetes secret:
+#    kubectl create secret docker-registry acr-secret \
+#      --docker-server=YOUR_ACR_NAME.azurecr.io \
+#      --docker-username=<appId> \
+#      --docker-****** \
+#      --namespace=superset
+# 5. Uncomment below:
+# imagePullSecrets:
+#   - name: acr-secret
+
+# ============================================================================
+# ENVIRONMENT-SPECIFIC CONFIGURATIONS
+# ============================================================================
+
+# Example: Development environment
+# image:
+#   tag: develop
+#   pullPolicy: Always
+
+# Example: Staging environment (release candidate)
+# image:
+#   tag: rc-v1.0.0
+#   pullPolicy: IfNotPresent
+
+# Example: Production environment (versioned release)
+# image:
+#   tag: v1.0.0
+#   pullPolicy: IfNotPresent
+
+# ============================================================================
+# AZURE-SPECIFIC OPTIMIZATIONS
+# ============================================================================
+
+# Use Azure Files or Azure Disk for persistent storage
+# (if you need persistent storage for Superset)
+
+# Example: Azure Files storage class
+# persistence:
+#   enabled: true
+#   storageClassName: azurefile
+#   size: 10Gi
+
+# Example: Azure Disk storage class
+# persistence:
+#   enabled: true
+#   storageClassName: managed-premium
+#   size: 20Gi
+
+# ============================================================================
+# NETWORK CONFIGURATION FOR PRIVATE CLUSTERS
+# ============================================================================
+
+# If using a private AKS cluster, you may need to configure:
+
+# 1. Internal load balancer for the service:
+# service:
+#   type: LoadBalancer
+#   annotations:
+#     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+#     service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "subnet-name"
+
+# 2. Private ingress controller:
+# ingress:
+#   enabled: true
+#   className: nginx  # or azure-application-gateway
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#   hosts:
+#     - superset.internal.example.com
+#   tls:
+#     - secretName: superset-tls
+#       hosts:
+#         - superset.internal.example.com
+
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
+
+# For Azure, consider using:
+# - Azure Database for PostgreSQL
+# - Azure SQL Database
+# - Azure Cosmos DB (with PostgreSQL API)
+
+# Example: Azure Database for PostgreSQL
+# postgresql:
+#   enabled: false  # Use external database
+# 
+# extraEnv:
+#   SUPERSET_DATABASE_URI: postgresql+psycopg2://user@server.postgres.database.azure.com:password@server.postgres.database.azure.com:5432/superset
+
+# Or use Azure Key Vault for secrets:
+# envFrom:
+#   - secretRef:
+#       name: superset-secrets  # Synced from Azure Key Vault via CSI driver
+
+# ============================================================================
+# REDIS CONFIGURATION
+# ============================================================================
+
+# For Azure, consider using:
+# - Azure Cache for Redis
+
+# Example: Azure Cache for Redis
+# redis:
+#   enabled: false  # Use external Redis
+#
+# extraEnv:
+#   REDIS_HOST: your-redis.redis.cache.windows.net
+#   REDIS_PORT: "6380"
+#   REDIS_SSL: "true"
+
+# ============================================================================
+# MONITORING AND LOGGING
+# ============================================================================
+
+# Azure Monitor integration
+# extraEnv:
+#   APPLICATIONINSIGHTS_CONNECTION_STRING: InstrumentationKey=xxx
+
+# ============================================================================
+# RESOURCE LIMITS
+# ============================================================================
+
+# Recommended resource limits for Azure
+# resources:
+#   requests:
+#     cpu: 500m
+#     memory: 2Gi
+#   limits:
+#     cpu: 2000m
+#     memory: 4Gi
+
+# ============================================================================
+# NODE AFFINITY (Optional)
+# ============================================================================
+
+# Run on specific node pools (e.g., user node pool)
+# nodeSelector:
+#   agentpool: usernodepool
+
+# Or use node affinity
+# affinity:
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#       - matchExpressions:
+#         - key: agentpool
+#           operator: In
+#           values:
+#           - usernodepool
+
+# ============================================================================
+# NOTES
+# ============================================================================
+
+# After deployment, verify the image source:
+#   kubectl describe pod -n superset | grep Image:
+#   Expected: YOUR_ACR_NAME.azurecr.io/superset:latest
+
+# View ACR images:
+#   az acr repository list --name YOUR_ACR_NAME
+#   az acr repository show-tags --name YOUR_ACR_NAME --repository superset
+
+# Troubleshooting image pull issues:
+#   kubectl get events -n superset | grep Pull
+#   kubectl describe pod <pod-name> -n superset
