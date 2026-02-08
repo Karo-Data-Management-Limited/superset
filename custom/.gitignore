@@ -1,0 +1,15 @@
+# Ignore environment-specific files that might contain secrets
+*.env
+*.secret
+secrets/
+
+# Ignore build artifacts
+*.pyc
+__pycache__/
+
+# But do track the template files
+!requirements.txt
+!Dockerfile.custom
+!docker-compose.custom.yml
+!README.md
+!.gitignore
