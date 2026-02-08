@@ -1,0 +1,55 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+######################################################################
+# Custom Superset Dockerfile
+# Extends the official Apache Superset image with organization-specific packages
+######################################################################
+
+# Use the official Superset image as base
+# Update this version tag when upgrading Superset
+FROM apache/superset:6.0.0
+
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dockerize (required for init containers in Kubernetes)
+ENV DOCKERIZE_VERSION v0.7.0
+RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin
+
+# Copy custom requirements file
+COPY custom/requirements.txt /app/custom/requirements.txt
+
+# Install custom Python packages using uv (Superset 6.0.0+ uses uv instead of pip)
+RUN . /app/.venv/bin/activate && \
+    if [ -s /app/custom/requirements.txt ]; then \
+        uv pip install --no-cache-dir -r /app/custom/requirements.txt; \
+    else \
+        echo "No custom requirements to install"; \
+    fi
+
+# Copy custom logo (if it exists)
+# Add your logo.png to the custom/ directory
+COPY custom/logo.png /app/superset/static/assets/images/karo_logo.png 2>/dev/null || echo "No custom logo found, skipping..."
+
+USER superset
