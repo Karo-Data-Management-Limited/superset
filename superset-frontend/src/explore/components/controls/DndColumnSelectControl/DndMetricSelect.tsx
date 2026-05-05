@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core';
+import { t } from '@apache-superset/core/translation';
 import {
   ensureIsArray,
   isAdhocMetricSimple,
@@ -27,8 +27,8 @@ import {
   Metric,
   QueryFormMetric,
 } from '@superset-ui/core';
-import { tn } from '@apache-superset/core';
-import { GenericDataType } from '@apache-superset/core/api/core';
+import { tn } from '@apache-superset/core/translation';
+import { GenericDataType } from '@apache-superset/core/common';
 import { ColumnMeta } from '@superset-ui/chart-controls';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
 import AdhocMetricPopoverTrigger from 'src/explore/components/controls/MetricControl/AdhocMetricPopoverTrigger';
@@ -139,7 +139,7 @@ const DndMetricSelect = (props: any) => {
   );
 
   const handleChange = useCallback(
-    opts => {
+    (opts: ValueType | ValueType[] | null) => {
       // if clear out options
       if (opts === null) {
         onChange(null);
@@ -150,7 +150,11 @@ const DndMetricSelect = (props: any) => {
       const optionValues = transformedOpts
         .map(option => {
           // pre-defined metric
-          if (option.metric_name) {
+          if (
+            typeof option === 'object' &&
+            'metric_name' in option &&
+            option.metric_name
+          ) {
             return option.metric_name;
           }
           return option;
@@ -263,7 +267,7 @@ const DndMetricSelect = (props: any) => {
   );
 
   const getSavedMetricOptionsForMetric = useCallback(
-    index =>
+    (index: number) =>
       getOptionsForSavedMetrics(
         props.savedMetrics,
         props.value,

@@ -19,9 +19,9 @@
 /* eslint-env browser */
 import cx from 'classnames';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { t } from '@apache-superset/core';
+import { t } from '@apache-superset/core/translation';
 import { addAlpha, JsonObject, useElementOnScreen } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/ui';
+import { css, styled, useTheme } from '@apache-superset/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
 import { EmptyState, Loading } from '@superset-ui/core/components';
 import { ErrorBoundary, BasicErrorAlert } from 'src/components';
@@ -49,6 +49,7 @@ import {
   handleComponentDrop,
   clearDashboardHistory,
 } from 'src/dashboard/actions/dashboardLayout';
+import { DropResult } from 'src/dashboard/components/dnd/dragDroppableConfig';
 import {
   DASHBOARD_GRID_ID,
   DASHBOARD_ROOT_DEPTH,
@@ -250,14 +251,9 @@ const DashboardContentWrapper = styled.div`
         z-index: ${EMPTY_CONTAINER_Z_INDEX};
         position: absolute;
         width: 100%;
-        pointer-events: none;
-
-        & > .drop-indicator {
-          pointer-events: auto;
-        }
       }
 
-      & > .empty-droptarget:first-child:not(.empty-droptarget--full) {
+      & > .empty-droptarget:first-of-type:not(.empty-droptarget--full) {
         height: ${theme.sizeUnit * 4}px;
         top: 0;
       }
@@ -303,7 +299,7 @@ const StyledDashboardContent = styled.div<{
     `}
 
       /* this is the ParentSize wrapper */
-    & > div:first-child {
+    & > div:first-of-type {
         height: 100% !important;
       }
     }
@@ -406,7 +402,7 @@ const DashboardBuilder = () => {
   }, [dashboardLayout, dispatch]);
 
   const handleDrop = useCallback(
-    dropResult => dispatch(handleComponentDrop(dropResult)),
+    (dropResult: DropResult) => dispatch(handleComponentDrop(dropResult)),
     [dispatch],
   );
 
@@ -508,9 +504,9 @@ const DashboardBuilder = () => {
     currentTopLevelTabs.current = topLevelTabs;
   }, [topLevelTabs]);
 
-  const renderDraggableContent = useCallback(
-    ({ dropIndicatorProps }: { dropIndicatorProps: JsonObject }) => (
-      <div>
+  const headerContent = useMemo(
+    () => (
+      <>
         {!hideDashboardHeader && <DashboardHeader />}
         {showFilterBar &&
           filterBarOrientation === FilterBarOrientation.Horizontal && (
@@ -519,43 +515,51 @@ const DashboardBuilder = () => {
               hidden={isReport}
             />
           )}
+      </>
+    ),
+    [hideDashboardHeader, showFilterBar, filterBarOrientation, isReport],
+  );
+
+  const renderDraggableContent = useCallback(
+    ({ dropIndicatorProps }: { dropIndicatorProps: JsonObject }) => (
+      <div>
         {dropIndicatorProps && <div {...dropIndicatorProps} />}
-        {!isReport && topLevelTabs && !uiConfig.hideNav && (
-          <WithPopoverMenu
-            shouldFocus={shouldFocusTabs}
-            menuItems={[
-              <IconButton
-                key="collapse-tabs"
-                icon={<Icons.FallOutlined iconSize="xl" />}
-                label={t('Collapse tab content')}
-                onClick={handleDeleteTopLevelTabs}
-              />,
-            ]}
-            editMode={editMode}
-          >
-            {/* @ts-ignore */}
-            <DashboardComponent
-              id={topLevelTabs?.id}
-              parentId={DASHBOARD_ROOT_ID}
-              depth={DASHBOARD_ROOT_DEPTH + 1}
-              index={0}
-              renderTabContent={false}
-              renderHoverMenu={false}
-              onChangeTab={handleChangeTab}
-            />
-          </WithPopoverMenu>
-        )}
+        {!isReport &&
+          topLevelTabs &&
+          !uiConfig.hideTab &&
+          !uiConfig.hideNav && (
+            <WithPopoverMenu
+              shouldFocus={shouldFocusTabs}
+              menuItems={[
+                <IconButton
+                  key="collapse-tabs"
+                  icon={<Icons.FallOutlined iconSize="xl" />}
+                  label={t('Collapse tab content')}
+                  onClick={handleDeleteTopLevelTabs}
+                />,
+              ]}
+              editMode={editMode}
+            >
+              <DashboardComponent
+                id={topLevelTabs?.id}
+                parentId={DASHBOARD_ROOT_ID}
+                depth={DASHBOARD_ROOT_DEPTH + 1}
+                index={0}
+                renderTabContent={false}
+                renderHoverMenu={false}
+                onChangeTab={handleChangeTab}
+              />
+            </WithPopoverMenu>
+          )}
       </div>
     ),
     [
-      nativeFiltersEnabled,
-      filterBarOrientation,
       editMode,
       handleChangeTab,
       handleDeleteTopLevelTabs,
-      hideDashboardHeader,
       isReport,
       topLevelTabs,
+      uiConfig.hideTab,
       uiConfig.hideNav,
     ],
   );
@@ -565,7 +569,7 @@ const DashboardBuilder = () => {
     : theme.sizeUnit * 8;
 
   const renderChild = useCallback(
-    adjustedWidth => {
+    (adjustedWidth: number) => {
       const filterBarWidth = dashboardFiltersOpen
         ? adjustedWidth
         : CLOSED_FILTER_BAR_WIDTH;
@@ -628,7 +632,7 @@ const DashboardBuilder = () => {
         ref={headerRef}
         filterBarWidth={headerFilterBarWidth}
       >
-        {/* @ts-ignore */}
+        {headerContent}
         <Droppable
           data-test="top-level-tabs"
           className={cx(!topLevelTabs && editMode && 'empty-droptarget')}

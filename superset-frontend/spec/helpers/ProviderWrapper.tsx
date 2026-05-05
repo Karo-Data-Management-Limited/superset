@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { ThemeProvider } from '@apache-superset/core/ui';
-import { parse, stringify } from 'query-string';
+import { ThemeProvider } from '@apache-superset/core/theme';
+import querystring from 'query-string';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
@@ -32,9 +32,9 @@ export function ProviderWrapper(props: any) {
         <QueryParamProvider
           adapter={ReactRouter5Adapter}
           options={{
-            searchStringToObject: parse,
+            searchStringToObject: querystring.parse,
             objectToSearchString: (object: Record<string, any>) =>
-              stringify(object, { encode: false }),
+              querystring.stringify(object, { encode: false }),
           }}
         >
           {children}
