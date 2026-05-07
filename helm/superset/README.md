@@ -46,6 +46,39 @@ It should be a long random bytes or str.
 
 On helm this can be set on `extraSecretEnv.SUPERSET_SECRET_KEY` or `configOverrides.secrets`
 
+## Using Custom Images from GitHub Container Registry (GHCR)
+
+If you want to build and deploy your own Superset images from GitHub Container Registry instead of the default DockerHub images:
+
+1. **Build and push images to GHCR**: The repository includes a GitHub Actions workflow (`.github/workflows/docker.yml`) that automatically builds and pushes images to both DockerHub and GHCR on pushes to `develop`, `release/*`, and `production` branches, as well as version tags.
+
+2. **Deploy using GHCR images**: Use the example values file to configure Helm to pull from GHCR:
+
+```console
+helm install my-superset ./helm/superset \
+  -f ./helm/superset/examples/ghcr-values.yaml \
+  --set image.repository=ghcr.io/your-org/superset \
+  --set image.tag=latest
+```
+
+3. **For private repositories**: Create an image pull secret if your GHCR repository is private:
+
+```console
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=YOUR_GITHUB_USERNAME \
+  --docker-password=YOUR_GITHUB_PAT \
+  --docker-email=YOUR_EMAIL
+
+helm install my-superset ./helm/superset \
+  -f ./helm/superset/examples/ghcr-values.yaml \
+  --set imagePullSecrets[0].name=ghcr-secret
+```
+
+4. **Branching Strategy**: For organizations maintaining a fork with custom modifications, see the [Branching Strategy Guide](../../docs/BRANCHING_STRATEGY.md) for recommended workflow using `develop`, `release/*`, and `production` branches.
+
+See `helm/superset/examples/ghcr-values.yaml` for a complete example configuration.
+
 ## Requirements
 
 | Repository | Name | Version |
