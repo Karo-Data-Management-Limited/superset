@@ -1,0 +1,138 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Build & publish Karo Superset image
+
+# Fork-specific image build:
+#   1. Build this fork's source via the upstream Dockerfile (lean target)
+#      and push as <version>-base. That carries our merged commits
+#      (i18n bootstrap, drill-detail CSV/XLSX, etc.).
+#   2. Layer custom/Dockerfile.custom on top (org Python deps + logo +
+#      dockerize) and push as <version> -- this is the deployable image.
+#
+# Pushes to ghcr.io/<owner>/superset only. Upstream docker.yml is
+# disabled on this fork (gh workflow disable).
+
+on:
+  push:
+    branches:
+      - "release/karo-*"
+      - "master"
+      - "develop"
+    tags:
+      - "karo-v*"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/superset
+
+jobs:
+  build:
+    name: Build & push (${{ github.ref_name }})
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Compute tags
+        id: ver
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          elif [[ "$GITHUB_REF" == refs/heads/release/* ]]; then
+            VERSION="${GITHUB_REF#refs/heads/release/}"
+          else
+            VERSION="${GITHUB_REF#refs/heads/}"
+          fi
+          # Sanitise slashes for use in docker tags
+          VERSION="${VERSION//\//-}"
+          SHA_SHORT="${GITHUB_SHA::7}"
+          {
+            echo "version=${VERSION}"
+            echo "sha_short=${SHA_SHORT}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved version tag: ${VERSION}"
+          echo "Resolved sha tag:     ${SHA_SHORT}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Stage 1 -- build the fork's lean image from upstream Dockerfile.
+      - name: Build & push base (lean) image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: lean
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}-base
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base
+          build-args: |
+            INCLUDE_CHROMIUM=false
+            BUILD_TRANSLATIONS=true
+          cache-from: type=gha,scope=karo-base
+          cache-to: type=gha,scope=karo-base,mode=max
+
+      # Stage 2 -- layer custom org deps + logo + dockerize on top.
+      - name: Build & push Karo image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./custom/Dockerfile.custom
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base
+          cache-from: type=gha,scope=karo-custom
+          cache-to: type=gha,scope=karo-custom,mode=max
+
+      - name: Summary
+        run: |
+          {
+            echo "## Pushed images"
+            echo ""
+            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}\` (deploy this)"
+            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}-base\`"
+            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}\`"
+            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base\`"
+          } >> "$GITHUB_STEP_SUMMARY"

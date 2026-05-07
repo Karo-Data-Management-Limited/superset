@@ -16,40 +16,39 @@
 #
 
 ######################################################################
-# Custom Superset Dockerfile
-# Extends the official Apache Superset image with organization-specific packages
+# Custom Superset image
+# Extends a base Superset image with organization-specific packages,
+# dockerize, and a custom logo.
+#
+# BASE_IMAGE defaults to the upstream Apache build for local use, but
+# CI overrides it to point at the just-built fork image in GHCR so the
+# resulting image carries this fork's source-level customisations too.
 ######################################################################
+ARG BASE_IMAGE=apache/superset:6.0.0
 
-# Use the official Superset image as base
-# Update this version tag when upgrading Superset
-FROM apache/superset:6.0.0
+FROM ${BASE_IMAGE} AS karo
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install minimal system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    && apt-get clean \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends wget ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dockerize (required for init containers in Kubernetes)
-ENV DOCKERIZE_VERSION v0.7.0
-RUN wget -O - https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz | tar xzf - -C /usr/local/bin
+# dockerize for k8s init containers (multi-arch aware)
+ENV DOCKERIZE_VERSION=v0.7.0
+RUN ARCH="$(dpkg --print-architecture)" \
+    && wget -qO- "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-${ARCH}-${DOCKERIZE_VERSION}.tar.gz" \
+       | tar xz -C /usr/local/bin
 
-# Copy custom requirements file
+# Custom Python packages on top of base Superset requirements.
 COPY custom/requirements.txt /app/custom/requirements.txt
-
-# Install custom Python packages using uv (Superset 6.0.0+ uses uv instead of pip)
-RUN . /app/.venv/bin/activate && \
-    if [ -s /app/custom/requirements.txt ]; then \
-        uv pip install --no-cache-dir -r /app/custom/requirements.txt; \
-    else \
-        echo "No custom requirements to install"; \
+RUN if [ -s /app/custom/requirements.txt ]; then \
+        . /app/.venv/bin/activate \
+        && uv pip install --no-cache-dir -r /app/custom/requirements.txt; \
     fi
 
-# Copy custom logo (if it exists)
-# Add your logo.png to the custom/ directory
-COPY custom/logo.png /app/superset/static/assets/images/karo_logo.png 2>/dev/null || echo "No custom logo found, skipping..."
+# Custom logo (always copied; commit logo.png alongside this file).
+COPY custom/logo.png /app/superset/static/assets/images/karo_logo.png
 
 USER superset

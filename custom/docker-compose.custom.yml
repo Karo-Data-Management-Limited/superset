@@ -64,7 +64,6 @@ services:
     build:
       context: ..
       dockerfile: custom/Dockerfile.custom
-      target: custom
 
   superset-init:
     image: *superset-image
