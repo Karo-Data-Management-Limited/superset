@@ -16,10 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, css } from '@apache-superset/core/theme';
+import { styled, css, useTheme } from '@apache-superset/core/theme';
 import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@apache-superset/core/translation';
 import { useMemo } from 'react';
 import { zip } from 'lodash';
+import { Tooltip } from '@superset-ui/core/components';
+import { Icons } from '@superset-ui/core/components/Icons';
 import {
   CopyToClipboardButton,
   FilterInput,
@@ -27,6 +30,7 @@ import {
 import { applyFormattingToTabularData } from 'src/utils/common';
 import { getTimeColumns } from 'src/explore/components/DataTableControl/utils';
 import RowCountLabel from 'src/components/RowCountLabel';
+import DownloadDropdown from 'src/components/Chart/DrillDetail/DownloadDropdown';
 import { TableControlsProps } from '../types';
 
 export const TableControlsWrapper = styled.div`
@@ -51,7 +55,11 @@ export const TableControls = ({
   rowcount,
   isLoading,
   canDownload,
+  onDownloadCSV,
+  onDownloadXLSX,
+  onReload,
 }: TableControlsProps) => {
+  const theme = useTheme();
   const originalTimeColumns = getTimeColumns(datasourceId);
   const formattedTimeColumns = zip<string, GenericDataType>(
     columnNames,
@@ -79,8 +87,25 @@ export const TableControls = ({
         `}
       >
         <RowCountLabel rowcount={rowcount} loading={isLoading} />
+        {canDownload && onDownloadCSV && onDownloadXLSX && (
+          <DownloadDropdown
+            onDownloadCSV={onDownloadCSV}
+            onDownloadXLSX={onDownloadXLSX}
+          />
+        )}
         {canDownload && (
           <CopyToClipboardButton data={formattedData} columns={columnNames} />
+        )}
+        {onReload && (
+          <Tooltip title={t('Reload')}>
+            <Icons.ReloadOutlined
+              iconColor={theme.colorIcon}
+              iconSize="l"
+              aria-label={t('Reload')}
+              role="button"
+              onClick={onReload}
+            />
+          </Tooltip>
         )}
       </div>
     </TableControlsWrapper>
