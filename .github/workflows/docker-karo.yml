@@ -47,7 +47,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/superset
 
 jobs:
   build:
@@ -72,12 +71,18 @@ jobs:
           # Sanitise slashes for use in docker tags
           VERSION="${VERSION//\//-}"
           SHA_SHORT="${GITHUB_SHA::7}"
+          # Docker registries require lowercase repository names; the
+          # GitHub org "Karo-Data-Management-Limited" has caps so we
+          # lowercase the owner here.
+          IMAGE_NAME="$(echo "${{ github.repository_owner }}/superset" | tr '[:upper:]' '[:lower:]')"
           {
             echo "version=${VERSION}"
             echo "sha_short=${SHA_SHORT}"
+            echo "image_name=${IMAGE_NAME}"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved version tag: ${VERSION}"
           echo "Resolved sha tag:     ${SHA_SHORT}"
+          echo "Resolved image name:  ${IMAGE_NAME}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
@@ -102,8 +107,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}-base
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base
+            ${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.version }}-base
+            ${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.sha_short }}-base
           build-args: |
             INCLUDE_CHROMIUM=false
             BUILD_TRANSLATIONS=true
@@ -119,10 +124,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}
+            ${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.sha_short }}
           build-args: |
-            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.sha_short }}-base
           cache-from: type=gha,scope=karo-custom
           cache-to: type=gha,scope=karo-custom,mode=max
 
@@ -131,8 +136,8 @@ jobs:
           {
             echo "## Pushed images"
             echo ""
-            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}\` (deploy this)"
-            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.version }}-base\`"
-            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}\`"
-            echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.ver.outputs.sha_short }}-base\`"
+            echo "- \`${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.version }}\` (deploy this)"
+            echo "- \`${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.version }}-base\`"
+            echo "- \`${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.sha_short }}\`"
+            echo "- \`${{ env.REGISTRY }}/${{ steps.ver.outputs.image_name }}:${{ steps.ver.outputs.sha_short }}-base\`"
           } >> "$GITHUB_STEP_SUMMARY"
