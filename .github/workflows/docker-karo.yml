@@ -112,6 +112,7 @@ jobs:
           build-args: |
             INCLUDE_CHROMIUM=false
             BUILD_TRANSLATIONS=true
+            NPM_BUILD_CMD=build-dev
           cache-from: type=gha,scope=karo-base
           cache-to: type=gha,scope=karo-base,mode=max
 
