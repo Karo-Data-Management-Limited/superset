@@ -34,7 +34,7 @@ on:
       - "master"
       - "develop"
     tags:
-      - "karo-v*"
+      - "karo-*"
   workflow_dispatch:
 
 concurrency:
