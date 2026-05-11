@@ -65,7 +65,7 @@ RUN --mount=type=bind,source=./superset-frontend/package.json,target=./package.j
     --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.npm \
     if [ "${DEV_MODE}" = "false" ]; then \
-        npm ci; \
+        npm ci --legacy-peer-deps; \
     else \
         echo "Skipping 'npm ci' in dev mode"; \
     fi
