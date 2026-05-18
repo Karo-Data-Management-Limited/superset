@@ -75,7 +75,7 @@ jobs:
       - name: Install dependencies
         if: env.HAS_TAGS
         working-directory: ./superset-frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Run unit tests
         if: env.HAS_TAGS
         working-directory: ./superset-frontend
