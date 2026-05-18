@@ -90,3 +90,14 @@ GPT.md
 # GHCR implementation guides
 GHCR_IMPLEMENTATION.md
 GHCR_QUICKSTART.md
+
+# Karo fork-specific docs and configs (no Apache license header by design)
+MERGE_READINESS.md
+PR_SUMMARY.md
+REACT_18_VALIDATION.md
+BRANCHING_QUICK_REFERENCE.md
+BRANCHING_STRATEGY.md
+CONTAINER_REGISTRY_OPTIONS.md
+MANAGING_CUSTOMIZATIONS.md
+ghcr-deployment.md
+custom

@@ -111,6 +111,9 @@ export const StyledModal = styled(BaseModal)<StyledModalProps>`
       align-items: center;
       [data-test='close-modal-btn'] {
         justify-content: center;
+        // Keep the close button clickable when modal body content uses
+        // position: sticky with elevated z-index (e.g. DatabaseModal header).
+        z-index: ${theme.zIndexPopupBase + 1};
       }
       .close {
         flex: 1 1 auto;

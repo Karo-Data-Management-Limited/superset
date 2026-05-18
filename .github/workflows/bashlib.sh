@@ -45,7 +45,7 @@ npm-install() {
   say "::group::Install npm packages"
   echo "npm: $(npm --version)"
   echo "node: $(node --version)"
-  npm ci
+  npm ci --legacy-peer-deps
   say "::endgroup::"
 
   # cache-save npm
@@ -150,7 +150,7 @@ cypress-install() {
   cache-restore cypress
 
   say "::group::Install Cypress"
-  npm ci
+  npm ci --legacy-peer-deps
   say "::endgroup::"
 
   cache-save cypress
