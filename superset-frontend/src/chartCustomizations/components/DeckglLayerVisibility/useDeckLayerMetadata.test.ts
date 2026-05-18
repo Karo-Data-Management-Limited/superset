@@ -196,7 +196,6 @@ test('clears isLoading when sliceIds transitions from non-empty to empty', async
   expect(result.current.layers).toEqual([]);
 });
 
-
 test('does not refetch when sliceIds array has same values', async () => {
   const mockResponse = {
     json: {
