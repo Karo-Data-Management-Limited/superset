@@ -105,8 +105,21 @@ const Legend = ({
   }
 
   const categories = Object.entries(categoriesObject).map(([k, v]) => {
-    const style = { color: `rgba(${v.color?.join(', ')})` };
-    const icon = v.enabled ? '\u25FC' : '\u25FB';
+    const color = `rgba(${v.color?.join(', ')})`;
+    // Render the swatch as a real coloured box rather than a coloured text
+    // glyph: U+25FC/U+25FB get emoji presentation on some platforms (e.g.
+    // Segoe UI Emoji on Windows), which ignores the CSS `color` property and
+    // paints the square its own built-in black. A bordered box honours the
+    // bucket colour reliably - filled when enabled, hollow when disabled.
+    const swatchStyle = {
+      display: 'inline-block',
+      width: '12px',
+      height: '12px',
+      border: `1px solid ${color}`,
+      backgroundColor: v.enabled ? color : 'transparent',
+      verticalAlign: 'middle',
+      flex: '0 0 auto',
+    };
 
     return (
       <li key={k}>
@@ -116,7 +129,7 @@ const Legend = ({
           onClick={() => toggleCategory(k)}
           onDoubleClick={() => showSingleCategory(k)}
         >
-          <span style={style}>{icon}</span> {formatCategoryLabel(k)}
+          <span aria-hidden style={swatchStyle} /> {formatCategoryLabel(k)}
         </a>
       </li>
     );
