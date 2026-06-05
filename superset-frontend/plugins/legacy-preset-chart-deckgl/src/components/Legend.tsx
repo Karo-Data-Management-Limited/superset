@@ -117,7 +117,7 @@ const Legend = ({
       height: '12px',
       border: `1px solid ${color}`,
       backgroundColor: v.enabled ? color : 'transparent',
-      verticalAlign: 'middle',
+      alignSelf: 'center',
       flex: '0 0 auto',
     };
 
