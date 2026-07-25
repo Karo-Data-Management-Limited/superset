@@ -1,0 +1,10 @@
+{
+  "name": "@superset-ui/mf-embed",
+  "version": "0.0.0",
+  "description": "Embed Superset dashboards and charts into a host application via Module Federation — the module-federation counterpart to @superset-ui/embedded-sdk (iframe). Host-agnostic: all host specifics (appRoot, bootstrap URL, theme, locale, router) are injected as config/props.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "license": "Apache-2.0"
+}
