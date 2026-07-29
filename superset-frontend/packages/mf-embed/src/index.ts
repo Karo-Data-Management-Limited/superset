@@ -27,6 +27,12 @@ export {
   type EmbedUiConfig,
 } from './EmbeddedDashboard';
 
+// EmbeddedExplore is intentionally NOT re-exported here: the vendored Explore
+// tree pulls extra deps (e.g. geolib) that view-only hosts (superset-dashboards)
+// don't otherwise need. Import it via the subpath so only authoring hosts
+// (superset-builder) compile it:
+//   import { EmbeddedExplore } from '@superset-ui/mf-embed/EmbeddedExplore';
+
 export {
   setEmbedConfig,
   getEmbedConfig,
