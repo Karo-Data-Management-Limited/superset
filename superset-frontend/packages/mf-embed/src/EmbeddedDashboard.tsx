@@ -28,7 +28,7 @@ import { UiConfigContext } from 'src/components/UiConfigContext';
 // @ts-expect-error — vendored .tsx; resolved via webpack alias `src` → vendor/superset-frontend
 import { DynamicPluginProvider } from 'src/components/DynamicPlugins';
 // @ts-expect-error — vendored .ts; resolved via webpack alias `src` → vendor/superset-frontend
-import { setActiveTab, setDirectPathToChild } from 'src/dashboard/actions/dashboardState';
+import { setActiveTab, setDirectPathToChild, setEditMode } from 'src/dashboard/actions/dashboardState';
 // @ts-expect-error — vendored .ts; resolved via webpack alias `src` → vendor/superset-frontend
 import { useDashboard } from 'src/hooks/apiResources';
 // @ts-expect-error — vendored .ts; resolved via webpack alias `src` → vendor/superset-frontend
@@ -109,6 +109,25 @@ function ActiveTabSync({ dashboardId, activeTabId }: ActiveTabSyncProps) {
   return null;
 }
 
+/**
+ * Puts the dashboard into (or out of) edit mode once `dashboardInfo` is
+ * hydrated, by dispatching the vendored `setEditMode`. Edit mode only takes
+ * full effect for a user Superset considers allowed to edit the dashboard
+ * (dash_edit_perm) — i.e. one whose FAB role carries dashboard write. Rendered
+ * only when the host requests edit mode, so the view path is untouched.
+ */
+function EditModeSync({ editMode }: { editMode: boolean }) {
+  const dispatch = useDispatch();
+  const hasInfo = useSelector<RootState, boolean>(
+    s => Boolean(s.dashboardInfo) && Object.keys(s.dashboardInfo).length > 0,
+  );
+  useEffect(() => {
+    if (!hasInfo) return;
+    dispatch(setEditMode(editMode));
+  }, [dispatch, hasInfo, editMode]);
+  return null;
+}
+
 export interface EmbeddedDashboardProps {
   /** Dashboard id or slug to render. */
   idOrSlug: string;
@@ -119,6 +138,11 @@ export interface EmbeddedDashboardProps {
   activeTabId?: string;
   /** UI chrome config. Defaults to {@link HOST_LOADED_UI_CONFIG}. */
   uiConfig?: EmbedUiConfig;
+  /**
+   * Open the dashboard in edit mode (authoring). The host typically pairs this
+   * with a less-hiding `uiConfig` so the vendored edit chrome is visible.
+   */
+  editMode?: boolean;
 }
 
 /**
@@ -142,6 +166,7 @@ export function EmbeddedDashboard({
   idOrSlug,
   activeTabId,
   uiConfig = HOST_LOADED_UI_CONFIG,
+  editMode = false,
 }: EmbeddedDashboardProps) {
   return (
     <MemoryRouter>
@@ -149,6 +174,7 @@ export function EmbeddedDashboard({
         <DynamicPluginProvider>
           <DndProvider backend={HTML5Backend}>
             <ActiveTabSync dashboardId={idOrSlug} activeTabId={activeTabId} />
+            {editMode && <EditModeSync editMode={editMode} />}
             <DashboardPage idOrSlug={idOrSlug} />
           </DndProvider>
         </DynamicPluginProvider>
