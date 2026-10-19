@@ -306,7 +306,7 @@ Add to `.github/workflows/docker.yml`:
     docker build -f Dockerfile.custom \
       --build-arg BASE_IMAGE=$GHCR_IMAGE_TAG \
       -t ${GHCR_IMAGE_TAG}-custom .
-    
+
     docker push ${GHCR_IMAGE_TAG}-custom
 ```
 
@@ -390,6 +390,14 @@ kubectl exec -it superset-xxx -- pip freeze | grep your-package
 - Deploy to production
 - Monitor closely
 - Keep old images as rollback option
+
+## Embedded chart authoring
+
+The embedded chart editor requires the authenticated Superset user in its Redux
+store. When the dataset control configuration does not supply a user, the chart
+source panel uses that active user for dataset ownership and permission controls.
+This supports both a new chart's dataset selection and existing chart editing;
+the backend remains responsible for authorizing dataset access and writes.
 
 ## Support
 
