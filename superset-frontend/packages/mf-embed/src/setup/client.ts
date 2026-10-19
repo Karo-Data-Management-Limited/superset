@@ -1,4 +1,22 @@
 /**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/**
  * Configure `SupersetClient` so vendored API hooks (useDashboard, useChart, …)
  * route through the host's `appRoot`, and run the init/CSRF handshake with a
  * retry that rides out first-login provisioning.
@@ -28,10 +46,7 @@ SupersetClient.configure({
 });
 
 export type SupersetClientPhase =
-  | 'initializing'
-  | 'provisioning'
-  | 'ready'
-  | 'failed';
+  'initializing' | 'provisioning' | 'ready' | 'failed';
 
 export interface SupersetClientStatus {
   phase: SupersetClientPhase;
@@ -76,7 +91,10 @@ async function runInit(): Promise<void> {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       // First attempt is the normal path; once it has failed and we're looping,
       // we're almost certainly waiting on first-login provisioning.
-      setStatus({ phase: attempt === 1 ? 'initializing' : 'provisioning', attempt });
+      setStatus({
+        phase: attempt === 1 ? 'initializing' : 'provisioning',
+        attempt,
+      });
       try {
         // force=true on retries so a previously-failed instance re-runs its CSRF
         // fetch rather than returning the cached rejected state.
@@ -86,7 +104,10 @@ async function runInit(): Promise<void> {
       } catch (error) {
         lastError = error;
         // eslint-disable-next-line no-console
-        console.warn(`[mf-embed] client init attempt ${attempt}/${MAX_ATTEMPTS} failed`, error);
+        console.warn(
+          `[mf-embed] client init attempt ${attempt}/${MAX_ATTEMPTS} failed`,
+          error,
+        );
         if (attempt < MAX_ATTEMPTS) {
           const delay = BASE_DELAY_MS * 2 ** (attempt - 1);
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -105,11 +126,11 @@ async function runInit(): Promise<void> {
 /** Re-run the init/retry cycle from scratch (wire to a boot-screen retry). */
 export function retrySupersetClientInit(): void {
   if (inFlight) return;
-  void runInit();
+  runInit();
 }
 
 // Kick off the handshake at module load.
-void runInit();
+runInit();
 
 /**
  * Fix export URL double-prefix. `exportChart` (vendored exploreUtils) builds the
@@ -120,14 +141,15 @@ void runInit();
  * endpoints are unaffected.
  */
 const _origPostForm = SupersetClient.postForm.bind(SupersetClient);
-(SupersetClient as unknown as Record<string, unknown>).postForm = function postFormDeduped(
-  endpoint: string,
-  payload: Record<string, unknown>,
-  target?: string,
-) {
-  const deduped =
-    endpoint.startsWith(APP_ROOT + '/') || endpoint === APP_ROOT
-      ? endpoint.slice(APP_ROOT.length) || '/'
-      : endpoint;
-  return _origPostForm(deduped, payload, target);
-};
+(SupersetClient as unknown as Record<string, unknown>).postForm =
+  function postFormDeduped(
+    endpoint: string,
+    payload: Record<string, unknown>,
+    target?: string,
+  ) {
+    const deduped =
+      endpoint.startsWith(`${APP_ROOT  }/`) || endpoint === APP_ROOT
+        ? endpoint.slice(APP_ROOT.length) || '/'
+        : endpoint;
+    return _origPostForm(deduped, payload, target);
+  };
