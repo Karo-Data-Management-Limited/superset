@@ -92,6 +92,7 @@ interface HydrateDashboardData extends Dashboard {
 }
 
 interface HydrateDashboardParams {
+  initialEditMode?: boolean;
   history: History;
   dashboard: HydrateDashboardData;
   charts: HydrateChartData[];
@@ -105,6 +106,7 @@ export const hydrateDashboard =
     history,
     dashboard,
     charts,
+    initialEditMode,
     dataMask,
     activeTabs,
     chartStates,
@@ -114,7 +116,7 @@ export const hydrateDashboard =
     const { metadata, position_data: positionData } = dashboard;
     const regularUrlParams = extractUrlParams('regular');
     const reservedUrlParams = extractUrlParams('reserved');
-    const editMode = reservedUrlParams.edit === 'true';
+    const editMode = initialEditMode ?? reservedUrlParams.edit === 'true';
 
     charts.forEach((chartItem: HydrateChartData) => {
       // eslint-disable-next-line no-param-reassign

@@ -78,6 +78,7 @@ const DashboardBuilder = lazy(
 
 type PageProps = {
   idOrSlug: string;
+  initialEditMode?: boolean;
 };
 
 // TODO: move to Dashboard.jsx when it's refactored to functional component
@@ -111,14 +112,16 @@ const selectActiveFilters = createSelector(
   }),
 );
 
-export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
+export const DashboardPage: FC<PageProps> = ({
+  idOrSlug,
+  initialEditMode,
+}: PageProps) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const history = useHistory();
   const dashboardPageId = useMemo(() => nanoid(), []);
-  const hasDashboardInfoInitiated = useSelector<RootState, boolean>(
-    ({ dashboardInfo }) =>
-      dashboardInfo && Object.keys(dashboardInfo).length > 0,
+  const hydratedDashboardId = useSelector(
+    (state: RootState) => state.dashboardInfo?.id,
   );
   const reduxTheme = useSelector(
     (state: RootState) => state.dashboardInfo.theme,
@@ -138,6 +141,9 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
   const error = dashboardApiError || chartsApiError;
   const readyToRender = Boolean(dashboard && charts);
   const { dashboard_title, id = 0 } = dashboard || {};
+  // A previous dashboard can still occupy the shared Redux store during loading.
+  const hasDashboardInfoInitiated =
+    Boolean(dashboard) && hydratedDashboardId === id;
 
   // Get CSS from dashboardInfo (unified properties location)
   const css =
@@ -204,6 +210,7 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
             history,
             dashboard: dashboard!,
             charts: charts!,
+            initialEditMode,
             activeTabs: activeTabs ?? null,
             dataMask,
             chartStates: chartStates ?? null,

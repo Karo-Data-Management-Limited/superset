@@ -27,6 +27,7 @@ import {
 import { SupersetClient } from '@superset-ui/core';
 import CrudThemeProvider from 'src/components/CrudThemeProvider';
 import DashboardPage from './DashboardPage';
+import { hydrateDashboard } from 'src/dashboard/actions/hydrate';
 
 const mockTheme = {
   id: 42,
@@ -253,4 +254,48 @@ test('passes null theme when Redux dashboardInfo.theme is explicitly null (theme
     expect.objectContaining({ theme: null }),
     expect.anything(),
   );
+});
+
+test('waits for the requested dashboard instead of rendering the previous editor state', async () => {
+  render(
+    <Suspense fallback="loading">
+      <DashboardPage idOrSlug="1" />
+    </Suspense>,
+    {
+      useRedux: true,
+      useRouter: true,
+      initialState: {
+        dashboardInfo: { id: 2, metadata: {} },
+        dashboardState: { sliceIds: [], editMode: true },
+        nativeFilters: { filters: {} },
+        dataMask: {},
+      },
+    },
+  );
+  await waitFor(() => expect(hydrateDashboard).toHaveBeenCalled());
+  expect(screen.queryByText('DashboardBuilder')).not.toBeInTheDocument();
+});
+
+test('passes the host initial edit mode into dashboard hydration', async () => {
+  render(
+    <Suspense fallback="loading">
+      <DashboardPage idOrSlug="1" initialEditMode />
+    </Suspense>,
+    {
+      useRedux: true,
+      useRouter: true,
+      initialState: {
+        dashboardInfo: { id: 1, metadata: {} },
+        dashboardState: { sliceIds: [] },
+        nativeFilters: { filters: {} },
+        dataMask: {},
+      },
+    },
+  );
+  await waitFor(() =>
+    expect(hydrateDashboard).toHaveBeenCalledWith(
+      expect.objectContaining({ initialEditMode: true }),
+    ),
+  );
+  expect(screen.getByText('DashboardBuilder')).toBeVisible();
 });
