@@ -31,7 +31,10 @@ function NavigationControls() {
       >
         Push dashboard
       </button>
-      <button onClick={() => history.replace('/explore/?slice_id=361')}>
+      <button
+        type="button"
+        onClick={() => history.replace('/explore/?slice_id=361')}
+      >
         Replace chart
       </button>
       <p>{location.pathname}</p>
