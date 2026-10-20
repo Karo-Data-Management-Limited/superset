@@ -46,7 +46,10 @@ SupersetClient.configure({
 });
 
 export type SupersetClientPhase =
-  'initializing' | 'provisioning' | 'ready' | 'failed';
+  | 'initializing'
+  | 'provisioning'
+  | 'ready'
+  | 'failed';
 
 export interface SupersetClientStatus {
   phase: SupersetClientPhase;
@@ -148,7 +151,7 @@ const _origPostForm = SupersetClient.postForm.bind(SupersetClient);
     target?: string,
   ) {
     const deduped =
-      endpoint.startsWith(`${APP_ROOT  }/`) || endpoint === APP_ROOT
+      endpoint.startsWith(`${APP_ROOT}/`) || endpoint === APP_ROOT
         ? endpoint.slice(APP_ROOT.length) || '/'
         : endpoint;
     return _origPostForm(deduped, payload, target);

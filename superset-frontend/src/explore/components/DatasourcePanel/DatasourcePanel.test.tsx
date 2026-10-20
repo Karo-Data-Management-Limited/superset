@@ -166,7 +166,7 @@ test('should render', async () => {
 });
 
 test('uses the authenticated user when dataset control props omit the user', async () => {
-  const dataset = { ...datasource, owners: [] };
+  const dataset = { ...datasource, name: 'table1', owners: [] };
   render(
     <DatasourcePanel
       {...props}
