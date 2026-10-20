@@ -17,6 +17,7 @@
  * under the License.
  */
 import { useContext, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { t } from '@apache-superset/core/translation';
 import { DatasourceType, Metric, QueryFormData } from '@superset-ui/core';
 import { Alert } from '@apache-superset/core/components';
@@ -30,6 +31,7 @@ import { Constants, Input } from '@superset-ui/core/components';
 import { SaveDatasetModal } from 'src/SqlLab/components/SaveDatasetModal';
 import { getDatasourceAsSaveableDataset } from 'src/utils/datasourceUtils';
 import { ExploreActions } from 'src/explore/actions/exploreActions';
+import { ExplorePageState } from 'src/explore/types';
 import Control from 'src/explore/components/Control';
 import { useDebounceValue } from 'src/hooks/useDebounceValue';
 import { DndItemType } from '../DndItemType';
@@ -133,6 +135,7 @@ export default function DataSourcePanel({
   actions,
   width,
 }: Props) {
+  const user = useSelector((state: ExplorePageState) => state.user);
   const [dropzones] = useContext(DropzoneContext);
   const { columns: _columns, metrics, folders: _folders } = datasource;
 
@@ -328,7 +331,12 @@ export default function DataSourcePanel({
         />
       )}
       {/* @ts-expect-error */}
-      <Control {...datasourceControl} name="datasource" actions={actions} />
+      <Control
+        {...datasourceControl}
+        user={datasourceControl.user ?? user}
+        name="datasource"
+        actions={actions}
+      />
       {datasource.id != null && mainBody}
     </DatasourceContainer>
   );

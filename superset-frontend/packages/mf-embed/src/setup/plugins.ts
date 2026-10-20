@@ -1,4 +1,22 @@
 /**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+/**
  * Lazy chart-plugin registration.
  *
  * Upstream `MainPreset.js` registers ~50 chart plugins via static imports,
@@ -19,30 +37,64 @@ async function registerEcharts() {
     /* webpackChunkName: "viz-echarts" */ '@superset-ui/plugin-chart-echarts'
   );
   new m.BigNumberChartPlugin().configure({ key: VizType.BigNumber }).register();
-  new m.BigNumberTotalChartPlugin().configure({ key: VizType.BigNumberTotal }).register();
-  new m.EchartsBoxPlotChartPlugin().configure({ key: VizType.BoxPlot }).register();
-  new m.EchartsFunnelChartPlugin().configure({ key: VizType.Funnel }).register();
-  new m.EchartsSankeyChartPlugin().configure({ key: VizType.Sankey }).register();
-  new m.EchartsTreemapChartPlugin().configure({ key: VizType.Treemap }).register();
+  new m.BigNumberTotalChartPlugin()
+    .configure({ key: VizType.BigNumberTotal })
+    .register();
+  new m.EchartsBoxPlotChartPlugin()
+    .configure({ key: VizType.BoxPlot })
+    .register();
+  new m.EchartsFunnelChartPlugin()
+    .configure({ key: VizType.Funnel })
+    .register();
+  new m.EchartsSankeyChartPlugin()
+    .configure({ key: VizType.Sankey })
+    .register();
+  new m.EchartsTreemapChartPlugin()
+    .configure({ key: VizType.Treemap })
+    .register();
   new m.EchartsGanttChartPlugin().configure({ key: VizType.Gantt }).register();
   new m.EchartsGaugeChartPlugin().configure({ key: VizType.Gauge }).register();
   new m.EchartsGraphChartPlugin().configure({ key: VizType.Graph }).register();
   new m.EchartsRadarChartPlugin().configure({ key: VizType.Radar }).register();
-  new m.EchartsMixedTimeseriesChartPlugin().configure({ key: VizType.MixedTimeseries }).register();
+  new m.EchartsMixedTimeseriesChartPlugin()
+    .configure({ key: VizType.MixedTimeseries })
+    .register();
   new m.EchartsPieChartPlugin().configure({ key: VizType.Pie }).register();
   new m.EchartsAreaChartPlugin().configure({ key: VizType.Area }).register();
-  new m.EchartsTimeseriesChartPlugin().configure({ key: VizType.Timeseries }).register();
-  new m.EchartsTimeseriesBarChartPlugin().configure({ key: VizType.Bar }).register();
-  new m.EchartsTimeseriesLineChartPlugin().configure({ key: VizType.Line }).register();
-  new m.EchartsTimeseriesSmoothLineChartPlugin().configure({ key: VizType.SmoothLine }).register();
-  new m.EchartsTimeseriesScatterChartPlugin().configure({ key: VizType.Scatter }).register();
-  new m.EchartsTimeseriesStepChartPlugin().configure({ key: VizType.Step }).register();
-  new m.EchartsWaterfallChartPlugin().configure({ key: VizType.Waterfall }).register();
-  new m.EchartsHeatmapChartPlugin().configure({ key: VizType.Heatmap }).register();
-  new m.EchartsHistogramChartPlugin().configure({ key: VizType.Histogram }).register();
+  new m.EchartsTimeseriesChartPlugin()
+    .configure({ key: VizType.Timeseries })
+    .register();
+  new m.EchartsTimeseriesBarChartPlugin()
+    .configure({ key: VizType.Bar })
+    .register();
+  new m.EchartsTimeseriesLineChartPlugin()
+    .configure({ key: VizType.Line })
+    .register();
+  new m.EchartsTimeseriesSmoothLineChartPlugin()
+    .configure({ key: VizType.SmoothLine })
+    .register();
+  new m.EchartsTimeseriesScatterChartPlugin()
+    .configure({ key: VizType.Scatter })
+    .register();
+  new m.EchartsTimeseriesStepChartPlugin()
+    .configure({ key: VizType.Step })
+    .register();
+  new m.EchartsWaterfallChartPlugin()
+    .configure({ key: VizType.Waterfall })
+    .register();
+  new m.EchartsHeatmapChartPlugin()
+    .configure({ key: VizType.Heatmap })
+    .register();
+  new m.EchartsHistogramChartPlugin()
+    .configure({ key: VizType.Histogram })
+    .register();
   new m.EchartsTreeChartPlugin().configure({ key: VizType.Tree }).register();
-  new m.EchartsSunburstChartPlugin().configure({ key: VizType.Sunburst }).register();
-  new m.EchartsBubbleChartPlugin().configure({ key: VizType.Bubble }).register();
+  new m.EchartsSunburstChartPlugin()
+    .configure({ key: VizType.Sunburst })
+    .register();
+  new m.EchartsBubbleChartPlugin()
+    .configure({ key: VizType.Bubble })
+    .register();
 
   if (isFeatureEnabled(FeatureFlag.ChartPluginsExperimental)) {
     new m.BigNumberPeriodOverPeriodChartPlugin()
@@ -69,24 +121,50 @@ async function registerDeckGl() {
 }
 
 async function registerLightLegacyCharts() {
-  const [calendar, chord, horizon, mapBox, pairedTTest, parallelCoords, partition, rose] =
-    await Promise.all([
-      import(/* webpackChunkName: "viz-calendar" */ '@superset-ui/legacy-plugin-chart-calendar'),
-      import(/* webpackChunkName: "viz-chord" */ '@superset-ui/legacy-plugin-chart-chord'),
-      import(/* webpackChunkName: "viz-horizon" */ '@superset-ui/legacy-plugin-chart-horizon'),
-      import(/* webpackChunkName: "viz-mapbox" */ '@superset-ui/legacy-plugin-chart-map-box'),
-      import(/* webpackChunkName: "viz-paired-t-test" */ '@superset-ui/legacy-plugin-chart-paired-t-test'),
-      import(/* webpackChunkName: "viz-parallel-coords" */ '@superset-ui/legacy-plugin-chart-parallel-coordinates'),
-      import(/* webpackChunkName: "viz-partition" */ '@superset-ui/legacy-plugin-chart-partition'),
-      import(/* webpackChunkName: "viz-rose" */ '@superset-ui/legacy-plugin-chart-rose'),
-    ]);
+  const [
+    calendar,
+    chord,
+    horizon,
+    mapBox,
+    pairedTTest,
+    parallelCoords,
+    partition,
+    rose,
+  ] = await Promise.all([
+    import(
+      /* webpackChunkName: "viz-calendar" */ '@superset-ui/legacy-plugin-chart-calendar'
+    ),
+    import(
+      /* webpackChunkName: "viz-chord" */ '@superset-ui/legacy-plugin-chart-chord'
+    ),
+    import(
+      /* webpackChunkName: "viz-horizon" */ '@superset-ui/legacy-plugin-chart-horizon'
+    ),
+    import(
+      /* webpackChunkName: "viz-mapbox" */ '@superset-ui/legacy-plugin-chart-map-box'
+    ),
+    import(
+      /* webpackChunkName: "viz-paired-t-test" */ '@superset-ui/legacy-plugin-chart-paired-t-test'
+    ),
+    import(
+      /* webpackChunkName: "viz-parallel-coords" */ '@superset-ui/legacy-plugin-chart-parallel-coordinates'
+    ),
+    import(
+      /* webpackChunkName: "viz-partition" */ '@superset-ui/legacy-plugin-chart-partition'
+    ),
+    import(
+      /* webpackChunkName: "viz-rose" */ '@superset-ui/legacy-plugin-chart-rose'
+    ),
+  ]);
 
   new calendar.default().configure({ key: VizType.Calendar }).register();
   new chord.default().configure({ key: VizType.Chord }).register();
   new horizon.default().configure({ key: VizType.Horizon }).register();
   new mapBox.default().configure({ key: VizType.MapBox }).register();
   new pairedTTest.default().configure({ key: VizType.PairedTTest }).register();
-  new parallelCoords.default().configure({ key: VizType.ParallelCoordinates }).register();
+  new parallelCoords.default()
+    .configure({ key: VizType.ParallelCoordinates })
+    .register();
   new partition.default().configure({ key: VizType.Partition }).register();
   new rose.default().configure({ key: VizType.Rose }).register();
 }
@@ -97,29 +175,52 @@ async function registerLightLegacyCharts() {
 // they register asynchronously after the app mounts and the browser idles.
 async function registerHeavyMaps() {
   const [countryMap, worldMap] = await Promise.all([
-    import(/* webpackChunkName: "viz-country-map" */ '@superset-ui/legacy-plugin-chart-country-map'),
-    import(/* webpackChunkName: "viz-world-map" */ '@superset-ui/legacy-plugin-chart-world-map'),
+    import(
+      /* webpackChunkName: "viz-country-map" */ '@superset-ui/legacy-plugin-chart-country-map'
+    ),
+    import(
+      /* webpackChunkName: "viz-world-map" */ '@superset-ui/legacy-plugin-chart-world-map'
+    ),
   ]);
   new countryMap.default().configure({ key: VizType.CountryMap }).register();
   new worldMap.default().configure({ key: VizType.WorldMap }).register();
 }
 
 async function registerStandardCharts() {
-  const [table, wordCloud, pivotTable, handlebars, timeTable, cartodiagram] = await Promise.all([
-    import(/* webpackChunkName: "viz-table" */ '@superset-ui/plugin-chart-table'),
-    import(/* webpackChunkName: "viz-word-cloud" */ '@superset-ui/plugin-chart-word-cloud'),
-    import(/* webpackChunkName: "viz-pivot-table" */ '@superset-ui/plugin-chart-pivot-table'),
-    import(/* webpackChunkName: "viz-handlebars" */ '@superset-ui/plugin-chart-handlebars'),
-    // TimeTable lives inside the vendored tree, resolved via the `src` alias.
-    // @ts-expect-error — vendored .tsx with no published types.
-    import(/* webpackChunkName: "viz-time-table" */ 'src/visualizations/TimeTable'),
-    import(/* webpackChunkName: "viz-cartodiagram" */ '@superset-ui/plugin-chart-cartodiagram'),
-  ]);
+  const [table, wordCloud, pivotTable, handlebars, timeTable, cartodiagram] =
+    await Promise.all([
+      import(
+        /* webpackChunkName: "viz-table" */ '@superset-ui/plugin-chart-table'
+      ),
+      import(
+        /* webpackChunkName: "viz-word-cloud" */ '@superset-ui/plugin-chart-word-cloud'
+      ),
+      import(
+        /* webpackChunkName: "viz-pivot-table" */ '@superset-ui/plugin-chart-pivot-table'
+      ),
+      import(
+        /* webpackChunkName: "viz-handlebars" */ '@superset-ui/plugin-chart-handlebars'
+      ),
+      // TimeTable lives inside the vendored tree, resolved via the `src` alias.
+      // @ts-expect-error — vendored .tsx with no published types.
+      import(
+        /* webpackChunkName: "viz-time-table" */ 'src/visualizations/TimeTable'
+      ),
+      import(
+        /* webpackChunkName: "viz-cartodiagram" */ '@superset-ui/plugin-chart-cartodiagram'
+      ),
+    ]);
 
   new table.default().configure({ key: VizType.Table }).register();
-  new wordCloud.WordCloudChartPlugin().configure({ key: VizType.WordCloud }).register();
-  new pivotTable.PivotTableChartPlugin().configure({ key: VizType.PivotTable }).register();
-  new handlebars.HandlebarsChartPlugin().configure({ key: VizType.Handlebars }).register();
+  new wordCloud.WordCloudChartPlugin()
+    .configure({ key: VizType.WordCloud })
+    .register();
+  new pivotTable.PivotTableChartPlugin()
+    .configure({ key: VizType.PivotTable })
+    .register();
+  new handlebars.HandlebarsChartPlugin()
+    .configure({ key: VizType.Handlebars })
+    .register();
   new timeTable.default().configure({ key: VizType.TimeTable }).register();
   new cartodiagram.CartodiagramPlugin({
     defaultLayers: [
@@ -147,17 +248,29 @@ async function registerStandardCharts() {
 
 async function registerFiltersAndCustomizations() {
   // @ts-expect-error — vendored barrels under `src/` have no published types.
-  const filters = await import(/* webpackChunkName: "viz-filters" */ 'src/filters/components');
+  const filters = await import(
+    /* webpackChunkName: "viz-filters" */ 'src/filters/components'
+  );
   // @ts-expect-error — vendored barrels under `src/` have no published types.
   const customizations = await import(
     /* webpackChunkName: "viz-customizations" */ 'src/chartCustomizations/components'
   );
 
-  new filters.SelectFilterPlugin().configure({ key: FilterPlugins.Select }).register();
-  new filters.RangeFilterPlugin().configure({ key: FilterPlugins.Range }).register();
-  new filters.TimeFilterPlugin().configure({ key: FilterPlugins.Time }).register();
-  new filters.TimeColumnFilterPlugin().configure({ key: FilterPlugins.TimeColumn }).register();
-  new filters.TimeGrainFilterPlugin().configure({ key: FilterPlugins.TimeGrain }).register();
+  new filters.SelectFilterPlugin()
+    .configure({ key: FilterPlugins.Select })
+    .register();
+  new filters.RangeFilterPlugin()
+    .configure({ key: FilterPlugins.Range })
+    .register();
+  new filters.TimeFilterPlugin()
+    .configure({ key: FilterPlugins.Time })
+    .register();
+  new filters.TimeColumnFilterPlugin()
+    .configure({ key: FilterPlugins.TimeColumn })
+    .register();
+  new filters.TimeGrainFilterPlugin()
+    .configure({ key: FilterPlugins.TimeGrain })
+    .register();
 
   new customizations.ChartCustomizationTimeGrainPlugin()
     .configure({ key: ChartCustomizationPlugins.TimeGrain })
@@ -178,8 +291,9 @@ function scheduleIdle(cb: () => void) {
     cb();
     return;
   }
-  const ric = (window as Window & { requestIdleCallback?: typeof requestIdleCallback })
-    .requestIdleCallback;
+  const ric = (
+    window as Window & { requestIdleCallback?: typeof requestIdleCallback }
+  ).requestIdleCallback;
   if (typeof ric === 'function') ric(cb, { timeout: 5000 });
   else setTimeout(cb, 1000);
 }

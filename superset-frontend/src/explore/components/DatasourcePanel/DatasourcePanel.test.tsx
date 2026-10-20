@@ -165,6 +165,26 @@ test('should render', async () => {
   expect(container).toBeVisible();
 });
 
+test('uses the authenticated user when dataset control props omit the user', async () => {
+  const dataset = { ...datasource, name: 'table1', owners: [] };
+  render(
+    <DatasourcePanel
+      {...props}
+      datasource={dataset}
+      controls={{
+        datasource: {
+          ...props.controls.datasource,
+          datasource: dataset,
+          user: undefined,
+        },
+      }}
+    />,
+    { useRedux: true, useDnd: true, initialState: { user: mockUser } },
+  );
+  expect(await screen.findByText('table1')).toBeVisible();
+  expect(screen.queryByText('Unexpected error')).not.toBeInTheDocument();
+});
+
 test('should display items in controls', async () => {
   render(<DatasourcePanel {...props} />, { useRedux: true, useDnd: true });
   expect(await screen.findByText('Metrics')).toBeInTheDocument();
