@@ -26,6 +26,7 @@ function NavigationControls() {
   return (
     <>
       <button
+        type="button"
         onClick={() => history.push('/superset/dashboard/18/?edit=true#tab')}
       >
         Push dashboard
