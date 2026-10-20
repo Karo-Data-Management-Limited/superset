@@ -403,6 +403,11 @@ EmbeddedExplore accepts an optional onNavigate callback for its internal memory
 router. Hosts can handle saved-dashboard destinations with their own module
 routes while leaving chart-control URL updates inside the editor.
 
+Embedded dashboards apply their requested edit mode during hydration, where native
+ownership permissions still gate editing. A dashboard waits for its own hydrated
+identity before rendering; it cannot mount a previous dashboard's authoring panels
+while navigating to a read-only shared dashboard.
+
 ## Support
 
 For questions or issues:

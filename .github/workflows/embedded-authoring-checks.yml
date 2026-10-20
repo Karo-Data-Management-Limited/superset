@@ -20,6 +20,8 @@ on:
     paths:
       - 'superset-frontend/src/explore/components/DatasourcePanel/**'
       - 'superset-frontend/packages/mf-embed/**'
+      - 'superset-frontend/src/dashboard/containers/DashboardPage*'
+      - 'superset-frontend/src/dashboard/actions/hydrate.ts'
       - 'superset-frontend/package-lock.json'
       - '.github/workflows/embedded-authoring-checks.yml'
 
@@ -43,4 +45,4 @@ jobs:
           cache: npm
           cache-dependency-path: superset-frontend/package-lock.json
       - run: npm ci --ignore-scripts --legacy-peer-deps --no-audit
-      - run: npx jest --runInBand src/explore/components/DatasourcePanel/DatasourcePanel.test.tsx packages/mf-embed/src/EmbeddedExploreNavigation.test.tsx
+      - run: npx jest --runInBand src/explore/components/DatasourcePanel/DatasourcePanel.test.tsx packages/mf-embed/src/EmbeddedExploreNavigation.test.tsx src/dashboard/containers/DashboardPage.test.tsx
