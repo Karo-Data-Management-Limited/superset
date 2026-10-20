@@ -43,4 +43,4 @@ jobs:
           cache: npm
           cache-dependency-path: superset-frontend/package-lock.json
       - run: npm ci --ignore-scripts --legacy-peer-deps --no-audit
-      - run: npx jest --runInBand src/explore/components/DatasourcePanel/DatasourcePanel.test.tsx
+      - run: npx jest --runInBand src/explore/components/DatasourcePanel/DatasourcePanel.test.tsx packages/mf-embed/src/EmbeddedExploreNavigation.test.tsx
