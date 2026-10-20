@@ -399,6 +399,10 @@ source panel uses that active user for dataset ownership and permission controls
 This supports both a new chart's dataset selection and existing chart editing;
 the backend remains responsible for authorizing dataset access and writes.
 
+EmbeddedExplore accepts an optional onNavigate callback for its internal memory
+router. Hosts can handle saved-dashboard destinations with their own module
+routes while leaving chart-control URL updates inside the editor.
+
 ## Support
 
 For questions or issues:

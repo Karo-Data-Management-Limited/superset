@@ -36,6 +36,7 @@
  * Host-agnostic: imports only vendored Superset + React ecosystem packages.
  */
 import { MemoryRouter } from 'react-router-dom';
+import { EmbeddedExploreNavigation } from './EmbeddedExploreNavigation';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 // @ts-expect-error — vendored .tsx; resolved via webpack alias `src` → vendor/superset-frontend
@@ -56,6 +57,8 @@ export interface EmbeddedExploreProps {
   vizType?: string;
   /** Any extra explore URL params to seed (rarely needed). */
   extraParams?: Record<string, string>;
+  /** Notify the host of internal navigation; ignored destinations stay in memory. */
+  onNavigate?: (url: string) => void;
 }
 
 /**
@@ -91,13 +94,14 @@ function buildExploreUrl({
  * metrics/columns). <MemoryRouter> gives `ExplorePage`/`ExploreViewContainer`
  * their `useHistory()` + seeded location; its in-memory navigation coexists with
  * the host's own router (different libraries) — control-change URL syncs and
- * save-and-go-to-dashboard land in-memory rather than touching the browser URL,
- * which is the intended embedded behaviour.
+ * save-and-go-to-dashboard stays in memory unless the host handles that destination
+ * through onNavigate. The host controls browser URLs and module transitions.
  */
 export function EmbeddedExplore(props: EmbeddedExploreProps) {
   const url = buildExploreUrl(props);
   return (
     <MemoryRouter initialEntries={[url]}>
+      <EmbeddedExploreNavigation onNavigate={props.onNavigate} />
       <DynamicPluginProvider>
         <DndProvider backend={HTML5Backend}>
           <ExplorePage />
